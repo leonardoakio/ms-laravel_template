@@ -92,7 +92,15 @@ return [
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
-
+        
+        'mongodb' => [
+            'driver'   => 'mongodb',
+            'dsn'      => env('MONGO_DB_DSN', 'mongodb://username:password@localhost:27017/template_app'),
+            'database' => env('MONGO_DB_DATABASE', 'default'),
+            // 'options'  => [
+            //     'database' => env('MONGO_DB_DATABASE', 'default'), # múltiplas conexões MongoDB
+            // ],
+        ],
     ],
 
     /*

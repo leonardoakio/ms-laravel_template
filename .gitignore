@@ -1,5 +1,6 @@
 /.phpunit.cache
 /node_modules
+/.docker/metabase/metabase-data
 /public/build
 /public/hot
 /public/storage

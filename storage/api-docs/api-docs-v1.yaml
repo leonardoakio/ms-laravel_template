@@ -1,0 +1,861 @@
+openapi: "3.0.0"
+info: 
+  title: "Customer Manager"
+  description: "Listagem de endpoints disponíveis na aplicação"
+  version: "1.0"
+
+securityDefinitions:
+  BasicAuth:
+    type: basic
+
+paths:
+  # Autenticação
+  /auth/login:
+    post:
+      tags:
+        - Authenticate
+      summary: "Geração de access_token"
+      description: "Retorna o access_token, token_type e ttl"
+      operationId: "getToken"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  description: "E-mail do usuário"
+                  type: string
+                  example: teste@teste.com
+                password:
+                  description: "Senha do usuário"
+                  type: string
+                  example: password
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  access_token:
+                    type: string
+                    example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9sb2dpbiIsImlhdCI6MTcwMjgyNzg1MCwiZXhwIjoxNzAyODMxNDUwLCJuYmYiOjE3MDI4Mjc4NTAsImp0aSI6InNqT25hUUJ4eXhxWXhoNlIiLCJzdWIiOiIxMSIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjciLCJlbWFpbCI6InRlc3RlQHRlc3RlLmNvbSJ9.4gleENryCOaU9Z8tRhEr_ozKpkIP44-1g7doZ1onJ2U"
+                  consumer_id:
+                    type: string
+                    example: bearer
+                  active:
+                    type: integer
+                    example: 3600
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+  /auth/refresh:
+    post:
+      tags:
+        - Authenticate
+      summary: "Refresh de access_token"
+      description: "Retorna o access_token, token_type e ttl"
+      operationId: "refreshToken"
+      parameters:
+        - name: Authorization
+          in: header
+          description: Access_token válido
+          required: true
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  access_token:
+                    type: string
+                    example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9sb2dpbiIsImlhdCI6MTcwMjgyNzg1MCwiZXhwIjoxNzAyODMxNDUwLCJuYmYiOjE3MDI4Mjc4NTAsImp0aSI6InNqT25hUUJ4eXhxWXhoNlIiLCJzdWIiOiIxMSIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjciLCJlbWFpbCI6InRlc3RlQHRlc3RlLmNvbSJ9.4gleENryCOaU9Z8tRhEr_ozKpkIP44-1g7doZ1onJ2U"
+                  consumer_id:
+                    type: string
+                    example: bearer
+                  active:
+                    type: integer
+                    example: 3600
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'  
+  /auth/logout:
+    post:
+      tags:
+        - Authenticate
+      summary: "Logout de usuário"
+      description: "Invalida o access_token"
+      operationId: "deleteToken"
+      parameters:
+        - name: Authorization
+          in: header
+          description: Access_token válido
+          required: true
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  message:
+                    type: string
+                    example: "Successfully logged out"
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+  # Dados do usuario                             
+  /api/v1/customer:
+    get:
+      tags:
+        - Customer
+      summary: "Lista todos os usuários cadastrados"
+      description: "Lista todos os usuários cadastrados"
+      operationId: "customerPanel"
+      parameters: 
+        - in: query
+          name: page
+          description: Página de metadata desejada 
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Limite de dados retornados por página
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: orderby
+          description: Ordenação "ASC" ou "DESC"
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  customers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          nullable: false
+                          example: 1
+                        name:
+                          nullable: false
+                          example: Laura Almeida Castro
+                        mother_name:
+                          nullable: false
+                          example: Luana Santos Azevedo
+                        document:
+                          nullable: false
+                          example: 31348844027
+                        cns:
+                          nullable: false
+                          example: 316621380001803
+                        address:
+                          type: object
+                          properties:
+                            address:
+                              nullable: false
+                              example: Travessa Pedro Caetano     
+                            number:
+                              nullable: false
+                              example: 655
+                            complement:
+                              nullable: false
+                              example: Casa B
+                            neighborhood:
+                              nullable: false
+                              example: Planalto
+                            city:
+                              nullable: false
+                              example: Manaus                             
+                            state:
+                              nullable: false
+                              example: AM
+                            postal_code:
+                              nullable: false
+                              example: 69044793
+                        picture_url:
+                          nullable: false
+                          example: picture02.jpg  
+                  metadata:
+                    type: object
+                    properties:
+                      page:
+                        nullable: false
+                        example: 2  
+                      limit:
+                        nullable: false
+                        example: 1  
+                      totalPages:
+                        nullable: false
+                        example: 4
+                      totalRecords:
+                        nullable: false
+                        example: 4                                                                                                                                                                                    
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+    post:
+      tags:
+        - Customer
+      summary: "Registra os dados inseridos de um usuário"
+      description: "Registra os dados inseridos de um usuário"
+      operationId: "createCustomer"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  properties:
+                    name:
+                      nullable: false
+                      example: Guilherme Carrara Sobrinho
+                    mother_name:
+                      nullable: false
+                      example: Irene Roque Fonseca
+                    document:
+                      nullable: false
+                      example: 35480706047
+                    cns:
+                      nullable: false
+                      example: 708505352621273
+                    picture_url:
+                      nullable: false
+                      example: picture10_url
+                    postal_code:
+                      nullable: false
+                      example: 87210234
+                    address:
+                      nullable: false
+                      example: Rua Washington Tavares Pereira
+                    number:
+                      nullable: false
+                      example: 1025
+                    complement:
+                      nullable: false
+                      example: apartamento 404
+                    neighborhood:
+                      nullable: false
+                      example: Residencial Aquiles Cômar
+                    city:
+                      nullable: false
+                      example: Cianorte
+                    state:
+                      nullable: false
+                      example: PR                                        
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    nullable: false
+                    example: Sucesso ao incluir os dados!
+                  data:
+                    properties:
+                      name:
+                        nullable: false
+                        example: Guilherme Carrara Sobrinho
+                      mother_name:
+                        nullable: false
+                        example: Irene Roque Fonseca
+                      document:
+                        nullable: false
+                        example: 35480706047
+                      cns:
+                        nullable: false
+                        example: 708505352621273
+                      picture_url:
+                        nullable: false
+                        example: picture10_url
+                      postal_code:
+                        nullable: false
+                        example: 87210234
+                      address:
+                        nullable: false
+                        example: Rua Washington Tavares Pereira
+                      number:
+                        nullable: false
+                        example: 1025
+                      complement:
+                        nullable: false
+                        example: apartamento 404
+                      neighborhood:
+                        nullable: false
+                        example: Residencial Aquiles Cômar
+                      city:
+                        nullable: false
+                        example: Cianorte
+                      state:
+                        nullable: false
+                        example: PR                                                                                                                                                           
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cliente com ID 5 não encontrado"
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+  api/v1/customer/csv:
+    post:
+      tags:
+        - Customer
+      summary: "Registra os dados inseridos através de arquivo CSV"
+      description: "Registra os dados inseridos através de arquivo CSV"
+      operationId: "createCsvCustomer"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                csv_file:
+                  type: string
+                  format: binary                                  
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    nullable: false
+                    example: "Arquivo csv importado com sucesso!"                                                                                                                                                 
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cliente com ID 5 não encontrado"
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'                  
+  /api/v1/customer/{id}:
+    get:
+      tags:
+        - Customer
+      summary: "Lista um usuário específico cadastrado"
+      description: "Lista um usuário específico cadastrado"
+      operationId: "findCustomer"
+      parameters: 
+        - in: path
+          name: id
+          required: true
+          description: ID do cliente a ser recuperado
+          schema:
+            type: integer
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  customers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          nullable: false
+                          example: 1
+                        name:
+                          nullable: false
+                          example: Laura Almeida Castro
+                        mother_name:
+                          nullable: false
+                          example: Luana Santos Azevedo
+                        document:
+                          nullable: false
+                          example: 31348844027
+                        cns:
+                          nullable: false
+                          example: 316621380001803
+                        addresses:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              address:
+                                nullable: false
+                                example: Travessa Pedro Caetano     
+                              number:
+                                nullable: false
+                                example: 655
+                              complement:
+                                nullable: false
+                                example: Casa B
+                              neighborhood:
+                                nullable: false
+                                example: Planalto
+                              city:
+                                nullable: false
+                                example: Manaus                             
+                              state:
+                                nullable: false
+                                example: AM
+                              postal_code:
+                                nullable: false
+                                example: 69044793
+                        picture_url:
+                          nullable: false
+                          example: picture02.jpg                                                                                                                                                                                   
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+    patch:
+      tags:
+        - Customer
+      summary: "Altera um usuário específico cadastrado"
+      description: "Altera um usuário específico cadastrado"
+      operationId: "updateCustomer"
+      parameters: 
+        - in: path
+          name: id
+          required: true
+          description: ID do cliente a ser recuperado
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        nullable: false
+                        example: Leonardo Akio
+                      document:
+                        nullable: false
+                        example: 22339637090
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  message:
+                    type: string
+                    example: "Sucesso ao atualizar os dados!"   
+                  data:
+                    properties:
+                      name:
+                        type: string
+                        example: Leonardo Akio       
+                      document:
+                        type: string
+                        example: 22339637090          
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Undefined array key 'addresses'"
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+  api/v1/customer/address/{id}:
+    patch:
+      tags:
+        - Customer
+      summary: "Altera um endereço de um usuário específico cadastrado"
+      description: "Altera um endereço de um usuário específico cadastrado"
+      operationId: "updateCustomerAddress"
+      parameters: 
+        - in: path
+          name: id
+          required: true
+          description: ID do cliente a ser recuperado
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      postal_code:
+                        nullable: false
+                        example: 30411030
+                      city:
+                        nullable: false
+                        example: Belo Horizonte
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  message:
+                    type: string
+                    example: "Sucesso ao atualizar os dados!"   
+                  data:
+                    properties:
+                      postal_code:
+                        type: string
+                        example: 30411030
+                      city:
+                        type: string
+                        example: Belo Horizonte          
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Undefined array key 'addresses'"
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+  api/v1/customer/{id}:                            
+    delete:
+      tags:
+        - Customer
+      summary: "Deleta usuário específico cadastrado"
+      description: "Deleta um usuário específico cadastrado"
+      operationId: "deleteCustomer"
+      parameters: 
+        - in: path
+          name: id
+          required: true
+          description: ID do cliente a ser recuperado
+          schema:
+            type: integer
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  message:
+                    type: string
+                    example: "Sucesso ao deletar o customer!"                                                                                                                                                           
+        401:
+          description: "Unauthorized"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-401'
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cliente com ID 5 não encontrado"
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+
+  # Validations
+  /api/v1/validate/postal-code:
+    get:
+      tags:
+        - Validate
+      summary: "Validação de Código Postal (CEP)"
+      description: "Validação de Código Postal (CEP)"
+      operationId: "validadePostalCode"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                postal_code:
+                  description: "Número de código postal (sem hífen)"
+                  type: string
+                  example: 30532097
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  active:
+                    type: integer
+                    example: 3600
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Undefined array key 'addresses'"                    
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'
+  /api/v1/validate/cns:
+    get:
+      tags:
+        - Validate
+      summary: "Validação de número de CNS"
+      description: "Validação de número de CNS"
+      operationId: "validadeCns"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cns:
+                  description: "Número de CNS (sem pontos ou espaço)"
+                  type: string
+                  example: 316621380001804
+      responses:
+        200:
+          description: "OK"
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  active:
+                    type: integer
+                    example: 3600
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Undefined array key 'addresses'"
+        500:
+          description: "Erro interno da aplicação"
+          content: 
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                  - $ref: '#/definitions/response-500'  
+definitions:
+  response-500:
+    type: object
+    required: 
+      - message
+      - code
+    properties:
+      message:
+        type: string
+        example: "Ops! Ocorreu um erro inesperado ao processar a sua solicitação!"
+        error_code:
+          type: integer
+          example: 503
+  response-400:
+    type: object
+    required: 
+      - message
+      - code
+    properties:
+      message:
+        type: string
+        example: "Erro na validação de campos!"
+        error_code:
+          type: integer
+          example: 404
+  response-401:
+    type: object
+    required: 
+      - message
+      - code
+    properties:
+      error:
+        type: string
+        example: "Unauthorized"
+        error_code:
+          type: integer
+          example: 404

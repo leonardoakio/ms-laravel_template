@@ -1,19 +1,16 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\DocumentationController;
+use App\Http\Controllers\HealthHandler;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+// Health Check
+Route::get("/health", [HealthHandler::class, "health"]);
+Route::get("/liveness", [HealthHandler::class, "liveness"]);
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Documentation routes
+Route::group(["prefix" => "documentation"], function () {
+    Route::get("/", [DocumentationController::class, "show"]);
+    Route::get("/v1.yaml", [DocumentationController::class, "yaml"]);
+    Route::get("/v2.yaml", [DocumentationController::class, "yamlV2"]);
 });
