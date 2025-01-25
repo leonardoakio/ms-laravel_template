@@ -111,7 +111,17 @@ return [
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
-
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'host' => env('DB_HOST', 'template_mongo'),
+            'port' => env('DB_PORT', 27017),
+            'database' => env('DB_DATABASE', 'template'),
+            'username' => env('DB_USERNAME', 'admin'),
+            'password' => env('DB_PASSWORD', 'F85Oj793SYtK'),
+            'options' => [
+                'database' => env('DB_AUTHENTICATION_DATABASE', 'admin'),
+            ],
+        ],
     ],
 
     /*
