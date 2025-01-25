@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Utils\HealthHandler;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Health Check
+Route::get("/health", [HealthHandler::class, "health"]);
+Route::get("/liveness", [HealthHandler::class, "liveness"]);
