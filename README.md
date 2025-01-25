@@ -1,66 +1,324 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align='center'>
+    <h1>Template</h1>
+</div>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Ambiente
 
-## About Laravel
+- PHP 8.4.3
+- Nginx 1.27.3
+- MySQL 8.4
+- PostgreSQL 17.2
+- MongoDB 1.27.3
+- Redis 7.2
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> __Obs__:
+Cada implementação de funcionalidades novas estão separados por diferentes [commits](https://github.com/leonardoakio/ms-laravel_template/commits/master/)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Adaptando o template
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Mantenha no `docker-compose.yml` apenas os serviços que deseja e a depender da escolha, terá que ser realizado ajustes nos arquivos, por exemplo apagar o **PostgreSQL**
+   2. `.env`: Apagar as credenciais do serviço, exemplo 
+    ```text
+    # Database
+    PGSQL_CONNECTION=pgsql
+    
+    # Database: PgSQL
+    PGSQL_HOST=template_postgresql
+    PGSQL_PORT=5432
+    PGSQL_DATABASE=template
+    PGSQL_USERNAME=root
+    PGSQL_PASSWORD=root
+    ```
+   3. `Dockerfile`: Excluir do build as dependências 
+    ```dockerfile
+   RUN docker-php-ext-install pdo pgsql pdo_pgsql
+   ```
+   4. `.docker/`: Deletar a configuração para cada serviço, exemplo 
+   ```text
+   .docker/postgresql/postgresql.env` 
+    ```
+    5. `src/Http/Controllers/Utils/HealthHandler.php`: Apagar a validação do servico no `liveness`
+   ```text
+    protected function testPostgreSqlConnection()
+    {...}
+    2. ```
+2. No arquivo `docker-compose.yml` altere os nomes dos containeres para o nome real da aplicação seguidos do serviço, exemplo: `intranet_app`
+3. No `.env` deve ser mudado o nome da aplicação e o nome que será refletido na stack do **docker compose**
+    ```php
+    # Application
+    - APP_NAME=template
+   
+    # Docker compose
+    - COMPOSE_PROJECT_NAME=template_api
+    ```
+4. `storage/api-docs/api-docs-v1.yaml`: Crie a documentação voltado para o contexto da aplicação
+   ```text
+    openapi: "3.0.0"
+    info:
+        title: "Template"
+        description: "Listagem de endpoints disponíveis na aplicação"
+        version: "1.0"
+    ...
+   ```
 
-## Learning Laravel
+## Utilizando o PostgreSQL
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Alteramos a `.env` para definir o database principal como o pgsql
+```php
+# Database
+ DB_CONNECTION=pgsql
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# Database: PgSQL
+ DB_HOST=template_postgresql
+ DB_PORT=5432
+ DB_DATABASE=template
+ DB_USERNAME=root
+ DB_PASSWORD=Lfp6w7sIp1lf
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+No `docker-compose.yml`, alteramos o serviço `application` para o host do pgsql
+```text
+# Database
+    application:
+        ...
+        environment:
+            - DB_HOST=template_postgresql
+            - DB_DATABASE=template
+            - DB_USERNAME=root
+            - DB_PASSWORD=Lfp6w7sIp1lf
+        volumes:
+            ...
+        depends_on:
+            postgresql:
+                condition: service_healthy
+```
 
-## Laravel Sponsors
+No `Dockerfile` instalamos a lib e extensão voltada para o Postgres
+```dockerfile
+# Instala as extensões PHP PDO e pdo_pgsql, que são necessárias para a comunicação com bancos de dados MySQL
+RUN docker-php-ext-install pdo pgsql pdo_pgsql
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+No arquivo de teste da saúde da aplicacao `HealthHandler`, adicionamos o método para validar o Postgres
+```php
+    public function liveness(): JsonResponse
+    {
+        $pgsqlStatus = $this->testPostgreSqlConnection();
 
-### Premium Partners
+        return response()->json([
+            'pgsql' => $pgsqlStatus,
+        ]);
+    }
+```
+```php
+    protected function testPostgreSqlConnection()
+    {
+        $results = [];
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+        $driver = config('database.connections.pgsql');
+        $start = microtime(true);
 
-## Contributing
+        try {
+            DB::connection('pgsql')->select("SELECT 'Health check' AS test");
+            $results[] = [
+                'alive' => true,
+                'host' => $driver['host'],
+                'duration' => $this->calculateTime($start) . ' milliseconds',
+            ];
+        } catch (\Exception $e) {
+            $results[] = [
+                'alive' => false,
+                'host' => $driver['host'],
+                'error' => $e->getMessage(),
+                'duration' => $this->calculateTime($start) . ' milliseconds',
+            ];
+        }
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+        return $results;
+    }
+```
+## Utilizando o MongoDB
 
-## Code of Conduct
+Alteramos a `.env` para definir o database principal como o mongodb
+> __Obs__:
+Podemos ao invés de definir como o banco de dados principal, criar uma nova conexão no arquivo `config/database.php` e nela definir as variáveis de ambiente exclusivas para o mongo e utilizá-las no `.env`
+```php
+# Database
+DB_CONNECTION=mongodb
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Database: MongoDB
+DB_HOST=template_mongo
+DB_PORT=27017
+DB_DATABASE=template
+DB_USERNAME=admin
+DB_PASSWORD=F85Oj793SYtK
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# MongoDB URI (alternativa)
+MONGODB_URI=mongodb://admin:F85Oj793SYtK@template_mongo:27017/template?authSource=admin
+```
 
-## License
+No `docker-compose.yml`, alteramos o servico `application` para o host do mongodb
+```php
+# Database
+    application:
+        ...
+        environment:
+            - DB_CONNECTION=mongodb
+            - DB_HOST=template_mongo
+            - DB_PORT=27017
+            - DB_DATABASE=template
+            - DB_USERNAME=admin
+            - DB_PASSWORD=F85Oj793SYtK
+        volumes:
+            ...
+        depends_on:
+            mongo:
+                condition: service_healthy
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+No `Dockerfile` instalamos a lib e extensão voltada para o MongoDB
+```dockerfile
+RUN apk update && apk add --no-cache \
+    ...
+    openssl-dev \
+    cyrus-sasl-dev
+    
+# Instalação da extensão mongodb
+RUN pecl install mongodb && docker-php-ext-enable mongodb
+```
+> __Obs__:
+Caso neste momento seja necessário instalar o pacote do mongodb, entre dentro do container e instale: `docker exec -it template_app composer require jenssegers/mongodb    `
+
+No arquivo de teste da saúde da aplicacao `HealthHandler`, adicionamos o método para validar o MongoDB
+```php
+    public function liveness(): JsonResponse
+    {
+        $mongoStatus = $this->testMongoConnection();
+
+        return response()->json([
+            'mongodb' => $mongoStatus
+        ]);
+    }
+```
+```php
+    protected function testMongoConnection()
+    {
+        $results = [];
+        $driver = config('database.connections.mongodb');
+        $start = microtime(true);
+    
+        try {
+            $connection = DB::connection('mongodb')->getMongoDB();
+            $command = new \MongoDB\Driver\Command(['ping' => 1]);
+            $cursor = $connection->command($command);
+    
+            // Converter o cursor para array
+            $response = current($cursor->toArray());
+    
+            $results[] = [
+                'alive' => isset($response->ok) && $response->ok == 1,
+                'host' => $driver['host'],
+                'duration' => $this->calculateTime($start) . ' milliseconds',
+            ];
+        } catch (\Throwable $e) {
+            $results[] = [
+                'alive' => false,
+                'host' => $driver['host'],
+                'error' => $e->getMessage(),
+                'duration' => $this->calculateTime($start) . ' milliseconds',
+            ];
+        }
+    
+        return $results;
+    }
+```
+
+## Iniciando o projeto
+
+Criar o arquivo `.env` no projeto e preencher as credenciais no arquivo de configuração principal
+```bash
+php -r "copy('.env.example', '.env');"
+```
+Criar uma network (caso não esteja criada)
+```bash
+docker network create application-network
+```
+Faça o build dos containeres no `docker-compose` no diretório raiz:
+```bash
+docker-compose up -d --build
+```
+> __Obs__:
+Pode ser necessário instalar as dependências de forma manual com `composer install`
+
+## Iniciando o projeto
+
+Usuário para teste com autenticação JWT
+```bash
+| email   =>   test@example.com  |
+| senha   =>   password          |
+```
+
+## Executando testes automatizados
+
+Execute as migrations com os dados das seeds
+```bash
+php artisan migrate:fresh --seed
+```
+Rode o script para execução dos testes automatizados
+```bash
+php artisan test
+```
+Execute o comando para gerar um diretório `coverage-report` e um relatório em `HTML` com a cobertura de testes
+```bash
+php artisan test --coverage-html=coverage-report
+```
+Abrir o relatório no seu navegador ou com o comando
+```bash
+open coverage-report/index.html
+```
+
+## Serviços e Portas
+
+| Container           | Host Port | Container Port (Internal) |
+|---------------------|-----------|---------------------------|
+| template_api        | `9500`    | `9500`                    |
+| template_nginx      | `8001`    | `80`                      |
+| template_mysql      | `3306`    | `3306`                    |
+| template_postgresql | `5432`    | `5432`                    |
+| template_mongodb    | `27017`   | `27017`                   |
+| mongo-express       | `8081`    | `8081`                    |
+| template_redis      | `6379`    | `6379`                    |
+| metabase            | `4000`    | `3000`                    |
+
+## Health
+
+Endpoint que validam a saúde da aplicação e dos serviços:
+
+- `http://localhost:8001/up`
+- `http://localhost:8001/api/health`
+- `http://localhost:8001/api/liveness`
+
+## Documentação
+
+Endpoint da aplicação: `http://localhost:8001/documentation`
+
+A documentação da API deve ser realizada no formato YAML e são armazenados no diretório `storage/api-docs` pelo nome `api-docs-v1.yml`
+
+## Monitoramento
+
+Endpoint de monitoramento de Queues e Jobs: `http://localhost:8001/horizon/dashboard`
+
+<!-- FOTO DO SWAGGER DA APLICACAO -->
+<!-- ![Swagger Image](/storage/external/swagger.png) -->
+
+**Referências:**
+
+- [Especificação OpenAPI - Swagger](https://swagger.io/specification/)
+
+## Servicos Auxiliares
+### Metabase
+Acesse o [Metabase](http://localhost:4000/setup.) através da porta **4000**
+
+### Mongo Express
+Acesse o [Mongo Express](http://localhost:8081/) através da porta **8081**
